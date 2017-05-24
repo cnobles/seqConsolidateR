@@ -57,7 +57,9 @@ if(!is.null(args$keyFile)){
   
 # Check sequence name lead
 if(is.null(args$seqName)){
-  args$seqName <- unlist(strsplit(args$seqFile, "fa[\\w]*"))[1]
+  parsedName <- unlist(strsplit(args$seqFile, "/"))[
+    length(unlist(strsplit(args$seqFile, "/")))]
+  args$seqName <- unlist(strsplit(parsedName, "fa[\\w]*"))[1]
 }
 
 # Print inputs to table
