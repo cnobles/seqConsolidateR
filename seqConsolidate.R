@@ -5,7 +5,7 @@ suppressMessages(library("pander"))
 suppressMessages(library("stringr"))
 
 code_dir <- dirname(
-  sub("--file=", "", grep("--file=", commandArgs(trailingOnly=FALSE), value=T)))
+  sub("--file=", "", grep("--file=", commandArgs(trailingOnly = FALSE), value = TRUE)))
 
 #' Set up and gather command line arguments
 parser <- ArgumentParser(
