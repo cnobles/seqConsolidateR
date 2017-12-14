@@ -11,21 +11,23 @@ code_dir <- dirname(
 parser <- ArgumentParser(
   description = "R-based nucleotide sequence consolidater. Consolidate nucleotide sequences down to unique sequences and produce a key to revert back.")
 parser$add_argument(
-  "seqFile", nargs = 1, type = "character", default = NULL,
+  "seqFile", nargs = 1, type = "character", default = "NA",
   help = "Sequence file to trim, either fasta or fastq format.")
 parser$add_argument(
-  "-o", "--output", nargs = 1, type = "character", default = NULL,
+  "-o", "--output", nargs = 1, type = "character", default = "NA",
   help = "Output fasta file name. Ex. sample.consolidated.fasta")
 parser$add_argument(
-  "-k", "--keyFile", nargs = 1, type = "character", default = NULL,
+  "-k", "--keyFile", nargs = 1, type = "character", default = "NA",
   help = "Key file output name. Ex. sample.r1.csv")
 parser$add_argument(
-  "-l", "--seqName", nargs = 1, type = "character", default = NULL,
+  "-l", "--seqName", nargs = 1, type = "character", default = "NA",
   help = "Name to append to unique sequences. Ex. sample.r1")
 parser$add_argument(
   "--compress", action = "store_true", help = "Output fasta file is gzipped.") 
 
 args <- parser$parse_args(commandArgs(trailingOnly = TRUE))
+
+if(args$seqFile == "NA") stop("No sequence file specified. Please provide.")
 
 # Check I/O file types
 seqType <- str_extract(args$seqFile, "fa[\\w]*")
@@ -34,7 +36,7 @@ if(!seqType %in% c("fa", "fasta", "fastq")){
 }
 seqType <- ifelse(seqType %in% c("fa", "fasta"), "fasta", "fastq")
 
-if(!is.null(args$output)){
+if(args$output != "NA"){
   outType <- str_extract(args$output, "fa[\\w]*")
   args$output <- unlist(strsplit(args$output, outType))[1]
   if(!outType %in% c("fa", "fasta", "fastq")){
@@ -46,17 +48,21 @@ if(!is.null(args$output)){
     outType <- "fasta"
   }
   args$output <- paste0(args$output, outType)
+}else{
+  stop("No output file name given. Please provide.")
 }
 
-if(!is.null(args$keyFile)){
+if(args$keyFile != "NA"){
   keyType <- str_extract(args$keyFile, "[\\w]+$")
   if(!keyType %in% c("csv", "tsv", "rds", "RData")){
     stop("Output key file type not supported. Please use csv, tsv, rds, or RData.")
   }
+}else{
+  stop("No key file name given. Please provide.")
 }
   
 # Check sequence name lead
-if(is.null(args$seqName)){
+if(args$seqName == "NA"){
   parsedName <- unlist(strsplit(args$seqFile, "/"))[
     length(unlist(strsplit(args$seqFile, "/")))]
   args$seqName <- unlist(strsplit(parsedName, "fa[\\w]*"))[1]
