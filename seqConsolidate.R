@@ -103,6 +103,30 @@ if(seqType == "fasta"){
 seqs <- ShortRead::sread(seqPointer)
 names(seqs) <- ShortRead::id(seqPointer)
 
+# Generate blank files if inputs are empty
+if(length(seqs) == 0){
+  writeXStringSet(
+    DNAStringSet(),
+    filepath = args$output,
+    format = "fasta",
+    compress = args$compress)
+  
+  if(!is.null(args$keyFile)){
+    key <- data.frame("readNames" = c(), "seqID" = c())
+    if(keyType == "csv"){
+      write.csv(key, file = args$keyFile, row.names = FALSE, quote = FALSE)
+    }else if(keyType == "tsv"){
+      write.table(
+        key, file = args$keyFile, sep = "\t", row.names = FALSE, quote = FALSE)
+    }else if(keyType == "rds"){
+      saveRDS(key, file = args$keyFile)
+    }else if(keyType == "RData"){
+      save(key, file = args$keyFile)
+    }
+  }
+}
+  
+
 factorSeqs <- factor(as.character(seqs))
 
 key <- data.frame(
