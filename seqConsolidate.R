@@ -124,6 +124,7 @@ if(length(seqs) == 0){
       save(key, file = args$keyFile)
     }
   }
+  q()
 }
   
 
