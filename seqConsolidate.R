@@ -12,7 +12,7 @@ parser <- ArgumentParser(
   description = "R-based nucleotide sequence consolidater. Consolidate nucleotide sequences down to unique sequences and produce a key to revert back.")
 parser$add_argument(
   "seqFile", nargs = 1, type = "character", default = "NA",
-  help = "Sequence file to trim, either fasta or fastq format.")
+  help = "Sequence file to consolidate to unique sequences, either fasta or fastq format.")
 parser$add_argument(
   "-o", "--output", nargs = 1, type = "character", default = "NA",
   help = "Output fasta file name. Ex. sample.consolidated.fasta")
@@ -21,7 +21,7 @@ parser$add_argument(
   help = "Key file output name. Ex. sample.r1.csv")
 parser$add_argument(
   "-l", "--seqName", nargs = 1, type = "character", default = "NA",
-  help = "Name to append to unique sequences. Ex. sample.r1")
+  help = "Name to append to unique sequences. Ex. sample.r1.")
 parser$add_argument(
   "--compress", action = "store_true", help = "Output fasta file is gzipped.") 
 
@@ -82,7 +82,7 @@ pandoc.table(data.frame(input_table, row.names = NULL),
              split.tables = Inf)
 
 # Load additional R-packages
-addPacks <- c("ShortRead", "BiocGenerics", "Biostrings")
+addPacks <- c("ShortRead")
 addPacksLoaded <- suppressMessages(
   sapply(addPacks, require, character.only = TRUE))
 if(!all(addPacksLoaded)){
@@ -154,10 +154,11 @@ if(is.null(args$output)){
       row.names = NULL),
     style = "simple")
 }else{
-  writeXStringSet(
+  unlink(args$output)
+  ShortRead::writeFasta(
     consolidatedSeqs, 
-    filepath = args$output, 
-    format = "fasta",
+    file = args$output,
+    width = max(width(consolidatedSeqs)),
     compress = args$compress)
 }
 
