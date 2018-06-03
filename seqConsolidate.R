@@ -30,14 +30,18 @@ args <- parser$parse_args(commandArgs(trailingOnly = TRUE))
 if(args$seqFile == "NA") stop("No sequence file specified. Please provide.")
 
 # Check I/O file types
-seqType <- str_extract(args$seqFile, "fa[\\w]*")
+seqType <- unlist(strsplit(args$seqFile, "/"))
+seqType <- seqType[length(seqType)]
+seqType <- str_extract(seqType, "fa[\\w]*")
 if(!seqType %in% c("fa", "fasta", "fastq")){
   stop("Unrecognized sequence file type, please convert to '*.fasta' or '*.fastq'. Gzip compression is acceptable as well.")
 }
 seqType <- ifelse(seqType %in% c("fa", "fasta"), "fasta", "fastq")
 
 if(args$output != "NA"){
-  outType <- str_extract(args$output, "fa[\\w]*")
+  outType <- unlist(strsplit(args$output, "/"))
+  outType <- outType[length(outType)]
+  outType <- str_extract(outType, "fa[\\w]*")
   args$output <- unlist(strsplit(args$output, outType))[1]
   if(!outType %in% c("fa", "fasta", "fastq")){
     stop("Unrecognized output file type, please choose '*.fasta' or '*.fastq'.")
