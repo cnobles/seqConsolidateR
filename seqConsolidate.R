@@ -4,26 +4,29 @@ suppressMessages(library("argparse"))
 suppressMessages(library("pander"))
 suppressMessages(library("stringr"))
 
-code_dir <- dirname(
-  sub("--file=", "", grep("--file=", commandArgs(trailingOnly = FALSE), value = TRUE)))
+code_dir <- dirname(sub("--file=", "", grep(
+  "--file=", commandArgs(trailingOnly = FALSE), value = TRUE)))
+
+desc <- desc <- yaml::yaml.load_file(file.path(code_dir, "descriptions.yml"))
 
 #' Set up and gather command line arguments
-parser <- ArgumentParser(
-  description = "R-based nucleotide sequence consolidater. Consolidate nucleotide sequences down to unique sequences and produce a key to revert back.")
+parser <- ArgumentParser(description = desc$program_short_description)
 parser$add_argument(
   "seqFile", nargs = 1, type = "character", default = "NA",
-  help = "Sequence file to consolidate to unique sequences, either fasta or fastq format.")
+  help = desc$seqFile)
 parser$add_argument(
   "-o", "--output", nargs = 1, type = "character", default = "NA",
-  help = "Output fasta file name. Ex. sample.consolidated.fasta")
+  help = desc$output)
 parser$add_argument(
   "-k", "--keyFile", nargs = 1, type = "character", default = "NA",
-  help = "Key file output name. Ex. sample.r1.csv")
+  help = desc$keyFile)
 parser$add_argument(
   "-l", "--seqName", nargs = 1, type = "character", default = "NA",
-  help = "Name to append to unique sequences. Ex. sample.r1.")
+  help = desc$seqName)
 parser$add_argument(
-  "--compress", action = "store_true", help = "Output fasta file is gzipped.") 
+  "--stat", nargs = 1, type = "character", default = FALSE, help = desc$stat)
+parser$add_argument(
+  "--compress", action = "store_true", help = desc$compress) 
 
 args <- parser$parse_args(commandArgs(trailingOnly = TRUE))
 
@@ -34,7 +37,7 @@ seqType <- unlist(strsplit(args$seqFile, "/"))
 seqType <- seqType[length(seqType)]
 seqType <- str_extract(seqType, "fa[\\w]*")
 if(!seqType %in% c("fa", "fasta", "fastq")){
-  stop("Unrecognized sequence file type, please convert to '*.fasta' or '*.fastq'. Gzip compression is acceptable as well.")
+  stop(desc$unrecognized_file_type, " ", desc$compression_note)
 }
 seqType <- ifelse(seqType %in% c("fa", "fasta"), "fasta", "fastq")
 
@@ -44,11 +47,11 @@ if(args$output != "NA"){
   outType <- str_extract(outType, "fa[\\w]*")
   args$output <- unlist(strsplit(args$output, outType))[1]
   if(!outType %in% c("fa", "fasta", "fastq")){
-    stop("Unrecognized output file type, please choose '*.fasta' or '*.fastq'.")
+    stop(desc$unrecognized_file_type)
   }
   outType <- ifelse(outType %in% c("fa", "fasta"), "fasta", "fastq")
   if(outType == "fastq"){
-    message("Since consolidation of sequences is only based on sequences, quality scores will be dropped. Output file will be in fasta format.")
+    message(desc$fastq_input)
     outType <- "fasta"
   }
   args$output <- paste0(args$output, outType)
@@ -59,7 +62,7 @@ if(args$output != "NA"){
 if(args$keyFile != "NA"){
   keyType <- str_extract(args$keyFile, "[\\w]+$")
   if(!keyType %in% c("csv", "tsv", "rds", "RData")){
-    stop("Output key file type not supported. Please use csv, tsv, rds, or RData.")
+    stop(desc$output_keyfile_type)
   }
 }else{
   stop("No key file name given. Please provide.")
@@ -78,7 +81,7 @@ input_table <- data.frame(
   "Values" = sapply(1:length(args), function(i){
     paste(args[[i]], collapse = ", ")}))
 input_table <- input_table[
-  match(c("seqFile :", "output :", "keyFile :", "seqName :"),
+  match(c("seqFile :", "output :", "keyFile :", "seqName :", "stat :"),
         input_table$Variables),]
 pandoc.title("seqConsolidateR Inputs")
 pandoc.table(data.frame(input_table, row.names = NULL), 
@@ -146,6 +149,20 @@ if(!is.null(args$output)){
   if(args$compress & !grepl(".gz", args$output)){
     args$output <- paste0(args$output, ".gz")
   }
+}
+
+# Stats if requested
+if(args$stat != FALSE){
+  sampleName <- unlist(strsplit(args$output, "/"))
+  sampleName <- unlist(
+    strsplit(sampleName[length(sampleName)], ".fa", fixed = TRUE))[1]
+  write.table(
+    data.frame(
+      sampleName = sampleName,
+      metric = "reads",
+      count = length(consolidatedSeqs)),
+    file = args$stat,
+    sep = ",", row.names = FALSE, col.names = FALSE, quote = FALSE)
 }
 
 # Write output and key files
