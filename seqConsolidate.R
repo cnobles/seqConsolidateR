@@ -131,6 +131,20 @@ if(length(seqs) == 0){
       save(key, file = args$keyFile)
     }
   }
+  
+  if(args$stat != FALSE){
+    sampleName <- unlist(strsplit(args$output, "/"))
+    sampleName <- unlist(
+      strsplit(sampleName[length(sampleName)], ".fa", fixed = TRUE))[1]
+    write.table(
+      data.frame(
+        sampleName = sampleName,
+        metric = "reads",
+        count = length(seqs)),
+      file = args$stat,
+      sep = ",", row.names = FALSE, col.names = FALSE, quote = FALSE)
+  }
+  
   q()
 }
   
